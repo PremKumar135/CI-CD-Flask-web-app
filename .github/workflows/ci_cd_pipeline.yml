@@ -37,6 +37,17 @@ jobs:
     #         - name: Run tests
     #           run: uv run pytest tests
 
+    # ## deploying the docker image to render
+    # deploy:
+    #   needs: docker-build-test-publish
+    #   # Only run this step if the branch is main
+    #   if: github.ref == 'refs/heads/main'
+    #   runs-on: ubuntu-latest
+    #   steps:
+    #     - name: Trigger Render Deploy
+    #       run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+
 
 
     ###### if we are running this flask app inside docker container ######
@@ -66,11 +77,13 @@ jobs:
         - name: Push Docker image
           run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/flasktest_web_app_ci_cd:latest
     
-    # deploy:
-    #   needs: test
-    #   # Only run this step if the branch is main
-    #   if: github.ref == 'refs/heads/main'
-    #   runs-on: ubuntu-latest
-    #   steps:
-    #     - name: Trigger Render Deploy
-    #       run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+    ## deploying the docker image to render
+    deploy-to-render:
+      needs: docker-build-test-publish
+      # Only run this step if the branch is main
+      if: github.ref == 'refs/heads/main'
+      runs-on: ubuntu-latest
+      steps:
+        - name: Trigger Render Deploy
+          run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
