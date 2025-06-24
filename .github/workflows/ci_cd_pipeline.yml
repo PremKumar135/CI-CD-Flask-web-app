@@ -1,4 +1,4 @@
-name: Python CI
+name: Python CI-CD
 
 # trigger the workflow on any push to the main branch or pull request
 on:
@@ -40,60 +40,47 @@ jobs:
 
 
     ###### if we are running this flask app inside docker container ######
-    dockerbuild:
+    docker-build:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
         - name: Build the docker image
-          run: docker build . --file Dockerfile --tag workflow-test:$(date +%s)
+          run: docker build . --file Dockerfile --tag simple_web_app_ci_cd:test
       
-      build-and-test:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v4
+    test-inside-container:
+      needs: docker-build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Run tests inside the container
+          run: docker run simple_web_app_ci_cd:test uv run pytest tests
 
-          - name: Install uv
-            uses: astral-sh/setup-uv@v5
+    publish-image:
+      needs: test-inside-container
+      runs-on: ubuntu-latest
 
-          - name: "Set up python"
-            uses: actions/setup-python@v5
-            with:
-              python-version-file: "pyproject.toml"
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
 
-          - name: Install the project
-            run: uv sync --locked --all-extras --dev
-          
-          - name: Run tests
-            run: uv run pytest tests
+        - name: Login to Docker Hub
+          uses: docker/login-action@v3
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+        - name: Set Up Docker Buildx
+          uses: docker/setup-buildx-action@v3
 
-      build-and-publish:
-        needs: build-and-test
-        runs-on: ubuntu-latest
+        - name: Build and push Docker image
+          uses: docker/build-push-action@v6
+          with:
+            context: .
+            file: ./Dockerfile
+            push: true
+            tags: ${{ secrets.DOCKER_USERNAME }}/flasktest_web_app_ci_cd:latest
 
-        steps:
-          - name: Checkout
-            uses: actions/checkout@v4
-
-          - name: Login to Docker Hub
-            uses: docker/login-action@v3
-            with:
-              username: ${{ secrets.DOCKERHUB_USERNAME }}
-              password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-          - name: Set Up Docker Buildx
-            uses: docker/setup-buildx-action@v3
-
-          - name: Build and push Docker image
-            uses: docker/build-push-action@v6
-            with:
-              context: .
-              file: ./Dockerfile
-              push: true
-              tags: ${{ secrets.DOCKER_USERNAME }}/flasktest_web_app_ci_cd:latest
-
-          - name: Image digest
-            run: echo ${{ steps.build-and-publish.outputs.digest }}
+        - name: Image digest
+          run: echo ${{ steps.publish-image.outputs.digest }}
 
     
     # deploy:
