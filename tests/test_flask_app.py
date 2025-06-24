@@ -21,7 +21,7 @@ def test_marks_post_valid_data(client):
     # Test POST request with valid marks
     data = {'Physics':'80',
             'Maths':'90',
-            'Chemistry':'85',
+            'Science':'85',
             'Tamil': '75',
             'English':'95'
             }
@@ -36,7 +36,7 @@ def test_marks_post_missing_data(client):
     data = {
         'Physics': '80',
         'Maths': '90',
-        'Chemistry': '85',
+        'Science': '85',
         'Tamil': '75'
     }
     response = client.post('/submit', data=data)
@@ -51,7 +51,7 @@ def test_marks_post_missing_data(client):
 #     data = {
 #         'Physics': 'eighty',
 #         'Maths': '90',
-#         'Chemistry': '85',
+#         'Science': '85',
 #         'Tamil': '75',
 #         'English': '95'
 #     }
