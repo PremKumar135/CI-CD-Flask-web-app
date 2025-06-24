@@ -61,7 +61,7 @@ jobs:
             password: ${{ secrets.DOCKERHUB_TOKEN }}
         
         - name: Push Docker image
-          run: docker push ${{ secrets.DOCKER_USERNAME }}/flasktest_web_app_ci_cd:latest
+          run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/flasktest_web_app_ci_cd:latest
     
     # deploy:
     #   needs: test
